@@ -334,32 +334,32 @@
       curl: 30,
     });
 
-    // Preloader timeline
+    // Preloader timeline (~3s total)
     const preloaderTl = gsap.timeline();
 
     preloaderTl.to('.preloader-logo', {
       opacity: 1,
-      duration: 1.5,
+      duration: 1,
       ease: 'power2.inOut',
     });
 
     preloaderTl.to('.preloader-logo', {
       opacity: 1,
-      duration: 2,
+      duration: 1,
     });
 
     preloaderTl.to('#preloader', {
       yPercent: -100,
-      duration: 1,
+      duration: 0.8,
       ease: 'power3.inOut',
       onComplete: () => {
         document.getElementById('preloader').remove();
       },
     });
 
-    // Hero intro animation — starts when preloader slides away
-    const tl = gsap.timeline({ delay: 0.1 });
-    preloaderTl.add(tl, '-=0.4');
+    // Hero intro animation — plays after preloader is gone
+    const tl = gsap.timeline();
+    preloaderTl.add(tl, '-=0.3');
 
     tl.to('.nav-logo', {
       opacity: 1,
