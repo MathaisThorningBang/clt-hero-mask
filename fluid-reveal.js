@@ -107,6 +107,7 @@ class FluidReveal {
 
     const image = new Image();
     image.crossOrigin = 'anonymous';
+    const texInfo = { texture, aspect: 1.0 };
     image.onload = () => {
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
@@ -114,9 +115,10 @@ class FluidReveal {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      texInfo.aspect = image.naturalWidth / image.naturalHeight;
     };
     image.src = src;
-    return texture;
+    return texInfo;
   }
 
   init(finishSrc, skeletonSrc) {
@@ -129,8 +131,8 @@ class FluidReveal {
     const texType = gl.FLOAT;
 
     // Load images
-    this.finishTexture = this.loadTexture(finishSrc);
-    this.skeletonTexture = this.loadTexture(skeletonSrc);
+    this.finishTexInfo = this.loadTexture(finishSrc);
+    this.skeletonTexInfo = this.loadTexture(skeletonSrc);
 
     // Vertex shader (shared)
     const baseVert = `
@@ -303,20 +305,36 @@ class FluidReveal {
       }
     `;
 
-    // Display shader — blends two images based on density mask
+    // Display shader — blends two images based on density mask (cover-fit)
     const displayFrag = `
       precision highp float;
       varying vec2 vUv;
       uniform sampler2D uFinish;
       uniform sampler2D uSkeleton;
       uniform sampler2D uDensity;
+      uniform float uCanvasAspect;
+      uniform float uFinishAspect;
+      uniform float uSkeletonAspect;
+
+      vec2 coverUv(vec2 uv, float canvasAspect, float imageAspect) {
+        vec2 s = vec2(1.0);
+        if (canvasAspect > imageAspect) {
+          s.y = imageAspect / canvasAspect;
+        } else {
+          s.x = canvasAspect / imageAspect;
+        }
+        return (uv - 0.5) * s + 0.5;
+      }
+
       void main() {
-        vec2 imageUv = vec2(vUv.x, 1.0 - vUv.y);
+        vec2 flippedUv = vec2(vUv.x, 1.0 - vUv.y);
+        vec2 finishUv = coverUv(flippedUv, uCanvasAspect, uFinishAspect);
+        vec2 skeletonUv = coverUv(flippedUv, uCanvasAspect, uSkeletonAspect);
         float mask = texture2D(uDensity, vUv).r;
         mask = smoothstep(0.0, 0.8, mask);
         mask = clamp(mask, 0.0, 1.0);
-        vec4 finish = texture2D(uFinish, imageUv);
-        vec4 skeleton = texture2D(uSkeleton, imageUv);
+        vec4 finish = texture2D(uFinish, finishUv);
+        vec4 skeleton = texture2D(uSkeleton, skeletonUv);
         gl_FragColor = mix(finish, skeleton, mask);
       }
     `;
@@ -568,13 +586,18 @@ class FluidReveal {
     const gl = this.gl;
     const u = this.useProgram(this.programs.display);
 
+    const canvasAspect = gl.canvas.width / gl.canvas.height;
+    gl.uniform1f(u.uCanvasAspect, canvasAspect);
+    gl.uniform1f(u.uFinishAspect, this.finishTexInfo.aspect);
+    gl.uniform1f(u.uSkeletonAspect, this.skeletonTexInfo.aspect);
+
     gl.uniform1i(u.uFinish, 0);
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.finishTexture);
+    gl.bindTexture(gl.TEXTURE_2D, this.finishTexInfo.texture);
 
     gl.uniform1i(u.uSkeleton, 1);
     gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, this.skeletonTexture);
+    gl.bindTexture(gl.TEXTURE_2D, this.skeletonTexInfo.texture);
 
     gl.uniform1i(u.uDensity, 2);
     gl.activeTexture(gl.TEXTURE2);

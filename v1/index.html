@@ -182,6 +182,59 @@
     .version-nav a:hover {
       color: rgba(255,255,255,0.7);
     }
+
+    @media (max-width: 768px) {
+      .nav {
+        top: 16px;
+        left: 16px;
+        right: 16px;
+      }
+
+      .nav-logo .bold {
+        font-size: 24px;
+      }
+
+      .nav-logo .regular {
+        font-size: 19px;
+      }
+
+      .nav-links {
+        gap: 16px;
+      }
+
+      .nav-links a {
+        font-size: 14px;
+      }
+
+      .nav-links .nav-contact {
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+
+      .hero-headline {
+        left: 16px;
+        right: 16px;
+      }
+
+      .hero-headline h1 {
+        font-size: clamp(36px, 10vw, 60px);
+        padding-bottom: 24px;
+      }
+
+      .version-nav {
+        top: 16px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .nav-links a:not(.nav-contact) {
+        display: none;
+      }
+
+      .hero-headline h1 {
+        font-size: clamp(32px, 10vw, 48px);
+      }
+    }
   </style>
 </head>
 <body>
