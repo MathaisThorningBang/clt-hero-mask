@@ -235,9 +235,48 @@
         font-size: clamp(32px, 10vw, 48px);
       }
     }
+
+    .preloader {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .preloader-logo {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      line-height: 0.9;
+      opacity: 0;
+    }
+
+    .preloader-logo .bold {
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: #0a0a0a;
+    }
+
+    .preloader-logo .regular {
+      font-size: 38px;
+      font-weight: 400;
+      letter-spacing: -0.03em;
+      color: #0a0a0a;
+    }
   </style>
 </head>
 <body>
+
+  <div class="preloader" id="preloader">
+    <div class="preloader-logo">
+      <span class="bold">CLT</span>
+      <span class="regular">Denmark</span>
+    </div>
+  </div>
 
   <section class="hero">
     <canvas id="fluidCanvas"></canvas>
@@ -295,8 +334,32 @@
       curl: 30,
     });
 
-    // GSAP intro animation
-    const tl = gsap.timeline({ delay: 0.3 });
+    // Preloader timeline
+    const preloaderTl = gsap.timeline();
+
+    preloaderTl.to('.preloader-logo', {
+      opacity: 1,
+      duration: 1.5,
+      ease: 'power2.inOut',
+    });
+
+    preloaderTl.to('.preloader-logo', {
+      opacity: 1,
+      duration: 2,
+    });
+
+    preloaderTl.to('#preloader', {
+      yPercent: -100,
+      duration: 1,
+      ease: 'power3.inOut',
+      onComplete: () => {
+        document.getElementById('preloader').remove();
+      },
+    });
+
+    // Hero intro animation — starts when preloader slides away
+    const tl = gsap.timeline({ delay: 0.1 });
+    preloaderTl.add(tl, '-=0.4');
 
     tl.to('.nav-logo', {
       opacity: 1,
